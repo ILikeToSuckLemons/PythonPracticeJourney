@@ -22,4 +22,9 @@ graphconfig = {
     "type": "float",
     "color": "sora"
 }
-requests.post()
+
+header = {
+    "X-USER-TOKEN":TOKEN
+}
+response = requests.post(url=graphendpoint, json=graphconfig, headers=header)
+print(response.text)
