@@ -1,19 +1,41 @@
+import os
 import requests
-from pprint import pprint
+from requests.auth import HTTPBasicAuth
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+SHEETY_PRICES_ENDPOINT = "YOUR ENDPOINT HERE"
+
 class DataManager:
+
     def __init__(self):
-        self.endpoint = "https://api.sheety.co/f04b0bc0b4cd3207882370dfc0cd0b90/copyOfFlightDeals/prices"
+        self._user = os.environ["SHEETY_USRERNAME"]
+        self._password = os.environ["SHEETY_PASSWORD"]
+        self._authorization = HTTPBasicAuth(self._user, self._password)
+        self.destination_data = {}
 
-    def getapi(self):
-        response = requests.get(self.endpoint)
-        return response.json()["prices"]
+    def get_destination_data(self):
+        # Use the Sheety API to GET all the data in that sheet and print it out.
+        response = requests.get(url=SHEETY_PRICES_ENDPOINT)
+        data = response.json()
+        self.destination_data = data["prices"]
+        # Try importing pretty print and printing the data out again using pprint() to see it formatted.
+        # pprint(data)
+        return self.destination_data
 
-    def update_iata_code(self, row_id, new_code):
-        update_url = f"{self.endpoint}/{row_id}"
-        new_data = {
-            "price": {
-                "iataCode": new_code
+    # In the DataManager Class make a PUT request and use the row id from sheet_data
+    # to update the Google Sheet with the IATA codes. (Do this using code).
+    def update_destination_codes(self):
+        for city in self.destination_data:
+            new_data = {
+                "price": {
+                    "iataCode": city["iataCode"]
+                }
             }
-        }
-        response = requests.put(url=update_url, json=new_data)
-        print(f"Updated row {row_id}: {response.status_code}")
+            response = requests.put(
+                url=f"{SHEETY_PRICES_ENDPOINT}/{city['id']}",
+                json=new_data
+            )
+            print(response.text)
